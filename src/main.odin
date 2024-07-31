@@ -4,6 +4,8 @@ import "core:fmt"
 import "core:os"
 import rl "vendor:raylib"
 
+import "pong"
+
 Game :: struct {
 	name:   string,
 	init:   proc(),
@@ -11,7 +13,9 @@ Game :: struct {
 	draw:   proc(),
 }
 
-games := []Game{{name = "pong", init = nil, update = nil, draw = nil}}
+games := []Game {
+	{name = "pong", init = pong.init, update = pong.update, draw = pong.draw},
+}
 
 selected_game: ^Game
 
@@ -88,7 +92,7 @@ draw_game :: proc() {
 	rl.BeginDrawing()
 	defer rl.EndDrawing()
 
-	rl.ClearBackground(rl.RAYWHITE)
+	rl.ClearBackground(rl.BLACK)
 
 	if selected_game.draw != nil {
 		selected_game.draw()
