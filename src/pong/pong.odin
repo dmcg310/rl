@@ -13,21 +13,33 @@ Paddle :: struct {
 	speed: f32,
 }
 
+Ball :: struct {
+	circle:   Circle,
+	velocity: Vec2,
+	speed:    f32,
+}
+
+Circle :: struct {
+	center: Vec2,
+	radius: f32,
+}
+
 PongState :: struct {
 	score:   [2]int,
 	arena:   Arena,
 	paddles: [2]Paddle,
+	ball:    Ball,
 }
 
 state: PongState
 
 init :: proc() {
+	score := [2]int{0, 0}
 	arena := create_arena()
 	paddles := create_paddles(arena)
-	state = PongState {
-		arena   = arena,
-		paddles = paddles,
-	}
+	ball := create_ball(arena)
+
+	state = PongState{score, arena, paddles, ball}
 }
 
 update :: proc() {
@@ -44,6 +56,7 @@ update :: proc() {
 draw :: proc() {
 	draw_arena()
 	draw_paddles(state.paddles)
+	draw_ball(state.ball)
 }
 
 @(private)
@@ -55,6 +68,11 @@ draw_arena :: proc() {
 draw_paddles :: proc(paddles: [2]Paddle) {
 	rl.DrawRectangleRec(paddles[0].rect, rl.BLUE)
 	rl.DrawRectangleRec(paddles[1].rect, rl.BLUE)
+}
+
+@(private)
+draw_ball :: proc(ball: Ball) {
+	rl.DrawCircleV(ball.circle.center, ball.circle.radius, rl.GREEN)
 }
 
 @(private)
@@ -98,4 +116,17 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 	}
 
 	return [2]Paddle{paddle_left, paddle_right}
+}
+
+@(private)
+create_ball :: proc(arena: Arena) -> Ball {
+	circle := Circle {
+		center = Vec2 {
+			arena.rect.x + arena.rect.width * 0.5,
+			arena.rect.y + arena.rect.height * 0.5,
+		},
+		radius = 4,
+	}
+
+	return Ball{circle = circle, velocity = Vec2{1, 1}, speed = 5}
 }
