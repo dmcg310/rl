@@ -72,7 +72,7 @@ draw_paddles :: proc(paddles: [2]Paddle) {
 
 @(private)
 draw_ball :: proc(ball: Ball) {
-	rl.DrawCircleV(ball.circle.center, ball.circle.radius, rl.GREEN)
+	rl.DrawCircleV(ball.circle.center, ball.circle.radius, rl.RAYWHITE)
 }
 
 @(private)
@@ -120,12 +120,14 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 
 @(private)
 create_ball :: proc(arena: Arena) -> Ball {
+	circle_radius: f32 = 7
+
 	circle := Circle {
 		center = Vec2 {
 			arena.rect.x + arena.rect.width * 0.5,
 			arena.rect.y + arena.rect.height * 0.5,
 		},
-		radius = 4,
+		radius = circle_radius,
 	}
 
 	return Ball{circle = circle, velocity = Vec2{1, 1}, speed = 5}
