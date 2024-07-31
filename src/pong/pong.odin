@@ -31,6 +31,14 @@ init :: proc() {
 }
 
 update :: proc() {
+	paddle_left := &state.paddles[0]
+	paddle_right := &state.paddles[1]
+
+	if rl.IsKeyDown(.W) do paddle_left.rect.y -= paddle_left.speed
+	if rl.IsKeyDown(.S) do paddle_left.rect.y += paddle_left.speed
+
+	if rl.IsKeyDown(.UP) do paddle_right.rect.y -= paddle_right.speed
+	if rl.IsKeyDown(.DOWN) do paddle_right.rect.y += paddle_right.speed
 }
 
 draw :: proc() {
@@ -67,6 +75,7 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 	paddle_width: f32 = 10
 	paddle_height: f32 = 100
 	paddle_offset: f32 = 20
+	paddle_speed: f32 = 2
 
 	paddle_left := Paddle {
 		rect = {
@@ -75,7 +84,7 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 			width = paddle_width,
 			height = paddle_height,
 		},
-		speed = 10,
+		speed = paddle_speed,
 	}
 
 	paddle_right := Paddle {
@@ -85,7 +94,7 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 			width = paddle_width,
 			height = paddle_height,
 		},
-		speed = 10,
+		speed = paddle_speed,
 	}
 
 	return [2]Paddle{paddle_left, paddle_right}
