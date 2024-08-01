@@ -66,6 +66,8 @@ update_paddles :: proc() {
 
 	if rl.IsKeyDown(.UP) do paddle_right.rect.y -= paddle_right.speed
 	if rl.IsKeyDown(.DOWN) do paddle_right.rect.y += paddle_right.speed
+
+	determine_paddles_arena_collision()
 }
 
 @(private)
@@ -89,7 +91,38 @@ update_score :: proc() {
 	else if ball_right >= arena_right do state.score[0] += 1
 	else do return
 
-	reset_ball(state.arena)
+	reset_ball()
+	reset_paddles()
+}
+
+@(private)
+determine_paddles_arena_collision :: proc() {
+	top_boundary := rl.Rectangle {
+		x      = state.arena.rect.x,
+		y      = state.arena.rect.y,
+		width  = state.arena.rect.width,
+		height = 1,
+	}
+
+	bottom_boundary := rl.Rectangle {
+		x      = state.arena.rect.x,
+		y      = state.arena.rect.y + state.arena.rect.height - 1,
+		width  = state.arena.rect.width,
+		height = 1,
+	}
+
+	for &paddle in state.paddles {
+		if rl.CheckCollisionRecs(paddle.rect, top_boundary) {
+			paddle.rect.y = state.arena.rect.y
+		}
+
+		if rl.CheckCollisionRecs(paddle.rect, bottom_boundary) {
+			paddle.rect.y =
+				state.arena.rect.y +
+				state.arena.rect.height -
+				paddle.rect.height
+		}
+	}
 }
 
 @(private)
@@ -128,6 +161,7 @@ determine_paddle_collision :: proc() {
 			paddle.rect,
 		) {
 			state.ball.velocity.x *= -1
+			state.ball.speed += 0.4
 		}
 	}
 }
@@ -211,8 +245,13 @@ create_ball :: proc(arena: Arena) -> Ball {
 }
 
 @(private)
-reset_ball :: proc(arena: Arena) {
-	state.ball = create_ball(arena)
+reset_ball :: proc() {
+	state.ball = create_ball(state.arena)
+}
+
+@(private)
+reset_paddles :: proc() {
+	state.paddles = create_paddles(state.arena)
 }
 
 @(private)
