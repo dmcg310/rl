@@ -54,6 +54,7 @@ draw :: proc() {
 	draw_arena()
 	draw_paddles(state.paddles)
 	draw_ball(state.ball)
+	draw_score(state.score)
 }
 
 @(private)
@@ -90,6 +91,10 @@ update_score :: proc() {
 	if ball_left <= arena_left do state.score[1] += 1
 	else if ball_right >= arena_right do state.score[0] += 1
 	else do return
+
+	if state.score[0] == 3 || state.score[1] == 3 {
+		// game over
+	}
 
 	reset_ball()
 	reset_paddles()
@@ -180,6 +185,20 @@ draw_paddles :: proc(paddles: [2]Paddle) {
 @(private)
 draw_ball :: proc(ball: Ball) {
 	rl.DrawCircleV(ball.circle.center, ball.circle.radius, rl.RAYWHITE)
+}
+
+@(private)
+draw_score :: proc(score: [2]int) {
+	font_size: i32 = 40
+	score_text := rl.TextFormat("%d : %d", score[0], score[1])
+	text_width := rl.MeasureText(score_text, font_size)
+
+	x :=
+		i32(state.arena.rect.x + (state.arena.rect.width / 2)) -
+		(text_width / 2)
+	y := i32(state.arena.rect.y) - font_size - 10
+
+	rl.DrawText(score_text, x, y, font_size, rl.RAYWHITE)
 }
 
 @(private)
