@@ -1,5 +1,7 @@
 package pong
 
+import "core:math"
+import "core:math/rand"
 import rl "vendor:raylib"
 
 Vec2 :: [2]f32
@@ -201,10 +203,24 @@ create_ball :: proc(arena: Arena) -> Ball {
 		radius = circle_radius,
 	}
 
-	return Ball{circle = circle, velocity = Vec2{1, 0.2}, speed = 4}
+	return Ball {
+		circle = circle,
+		velocity = generate_random_velocity(),
+		speed = 2,
+	}
 }
 
 @(private)
 reset_ball :: proc(arena: Arena) {
 	state.ball = create_ball(arena)
+}
+
+@(private)
+generate_random_velocity :: proc() -> Vec2 {
+	angle := rand.float32_range(-35, 35) * math.PI / 180
+	velocity := Vec2{math.cos(angle), math.sin(angle)}
+
+	if rand.int63() % 2 == 0 do velocity.x *= -1
+
+	return velocity
 }
