@@ -43,6 +43,18 @@ init :: proc() {
 }
 
 update :: proc() {
+	update_paddles()
+	update_ball()
+}
+
+draw :: proc() {
+	draw_arena()
+	draw_paddles(state.paddles)
+	draw_ball(state.ball)
+}
+
+@(private)
+update_paddles :: proc() {
 	paddle_left := &state.paddles[0]
 	paddle_right := &state.paddles[1]
 
@@ -53,10 +65,59 @@ update :: proc() {
 	if rl.IsKeyDown(.DOWN) do paddle_right.rect.y += paddle_right.speed
 }
 
-draw :: proc() {
-	draw_arena()
-	draw_paddles(state.paddles)
-	draw_ball(state.ball)
+@(private)
+update_ball :: proc() {
+	state.ball.circle.center.x += state.ball.velocity.x * state.ball.speed
+	state.ball.circle.center.y += state.ball.velocity.y * state.ball.speed
+
+	if determine_paddle_collision() do state.ball.velocity.x *= -1
+	if determine_arena_collision() do state.ball.velocity.y *= -1
+}
+
+@(private)
+determine_paddle_collision :: proc() -> bool {
+	ball_speed := state.ball.speed
+	ball_velocity := state.ball.velocity
+	ball_radius := state.ball.circle.radius
+	ball_x := &state.ball.circle.center.x
+	ball_y := &state.ball.circle.center.y
+
+	ball_x^ += ball_velocity.x * ball_speed
+	ball_y^ += ball_velocity.y * ball_speed
+
+	ball_right_edge := ball_x^ + ball_radius
+	ball_left_edge := ball_x^ - ball_radius
+
+	ball_top_edge := ball_y^ + ball_radius
+	ball_bottom_edge := ball_y^ - ball_radius
+
+	for &paddle, i in state.paddles {
+		paddle_left_edge := paddle.rect.x
+		paddle_right_edge := paddle.rect.x + paddle.rect.width
+		paddle_top_edge := paddle.rect.y
+		paddle_bottom_edge := paddle.rect.y + paddle.rect.height
+
+		if ball_right_edge > paddle_left_edge &&
+		   ball_left_edge < paddle_right_edge {
+			if paddle_top_edge <= ball_bottom_edge &&
+			   paddle_bottom_edge >= ball_top_edge {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+@(private)
+determine_arena_collision :: proc() -> bool {
+	ball_top := state.ball.circle.center.y - state.ball.circle.radius
+	ball_bottom := state.ball.circle.center.y + state.ball.circle.radius
+
+	arena_top := state.arena.rect.y
+	arena_bottom := state.arena.rect.y + state.arena.rect.height
+
+	return ball_top <= arena_top || ball_bottom >= arena_bottom
 }
 
 @(private)
@@ -130,5 +191,5 @@ create_ball :: proc(arena: Arena) -> Ball {
 		radius = circle_radius,
 	}
 
-	return Ball{circle = circle, velocity = Vec2{1, 1}, speed = 5}
+	return Ball{circle = circle, velocity = Vec2{1, 0.2}, speed = 1}
 }
