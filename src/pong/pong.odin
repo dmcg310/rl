@@ -57,6 +57,9 @@ state: PongState
 @(private)
 LAST_UPDATE_TIME := rl.GetTime()
 
+@(private)
+BORDER_THICKNESS: f32 = 10
+
 init :: proc() {
 	score := [2]int{0, 0}
 	arena := create_arena()
@@ -164,6 +167,8 @@ update_score :: proc() {
 /* DRAW PROCEDURES */
 
 draw :: proc() {
+	rl.ClearBackground(rl.GRAY)
+
 	switch state.game_state {
 	case .StartScreen:
 		draw_start_screen()
@@ -178,8 +183,6 @@ draw :: proc() {
 
 @(private)
 draw_start_screen :: proc() {
-	rl.ClearBackground(rl.BLACK)
-
 	title_text: cstring = "PONG"
 	font_size: i32 = 90
 	text_width := rl.MeasureText(title_text, font_size)
@@ -212,8 +215,20 @@ draw_start_screen :: proc() {
 draw_countdown :: proc() {
 	draw_game()
 
+	countdown_bg_width: i32 = 200
+	countdown_bg_height: i32 = 150
+	countdown_bg_x := i32(rl.GetScreenWidth() / 2 - countdown_bg_width / 2)
+	countdown_bg_y := i32(rl.GetScreenHeight() / 2 - countdown_bg_height / 2)
+	rl.DrawRectangle(
+		countdown_bg_x,
+		countdown_bg_y,
+		countdown_bg_width,
+		countdown_bg_height,
+		rl.ColorAlpha(rl.BLACK, 0.5),
+	)
+
 	countdown_text := rl.TextFormat("%d", state.countdown)
-	font_size: i32 = 130
+	font_size: i32 = 100
 	text_width := rl.MeasureText(countdown_text, font_size)
 
 	rl.DrawText(
@@ -245,7 +260,7 @@ draw_game_over :: proc() {
 	rl.DrawText(
 		game_over_text,
 		i32(rl.GetScreenWidth() / 2 - text_width / 2),
-		100,
+		125,
 		font_size,
 		rl.WHITE,
 	)
@@ -281,6 +296,42 @@ draw_game_over :: proc() {
 @(private)
 draw_arena :: proc() {
 	rl.DrawRectangleRec(state.arena.rect, rl.DARKGRAY)
+
+	// Draw top border
+	rl.DrawRectangle(
+		i32(state.arena.rect.x - BORDER_THICKNESS),
+		i32(state.arena.rect.y - BORDER_THICKNESS),
+		i32(state.arena.rect.width + 2 * BORDER_THICKNESS),
+		i32(BORDER_THICKNESS),
+		rl.RAYWHITE,
+	)
+
+	// Draw bottom border
+	rl.DrawRectangle(
+		i32(state.arena.rect.x - BORDER_THICKNESS),
+		i32(state.arena.rect.y + state.arena.rect.height),
+		i32(state.arena.rect.width + 2 * BORDER_THICKNESS),
+		i32(BORDER_THICKNESS),
+		rl.RAYWHITE,
+	)
+
+	// Draw left border
+	rl.DrawRectangle(
+		i32(state.arena.rect.x - BORDER_THICKNESS),
+		i32(state.arena.rect.y),
+		i32(BORDER_THICKNESS),
+		i32(state.arena.rect.height),
+		rl.RAYWHITE,
+	)
+
+	// Draw right border
+	rl.DrawRectangle(
+		i32(state.arena.rect.x + state.arena.rect.width),
+		i32(state.arena.rect.y),
+		i32(BORDER_THICKNESS),
+		i32(state.arena.rect.height),
+		rl.RAYWHITE,
+	)
 }
 
 @(private)
@@ -312,8 +363,8 @@ draw_divider :: proc(arena: Arena) {
 
 @(private)
 draw_paddles :: proc(paddles: [2]Paddle) {
-	rl.DrawRectangleRec(paddles[0].rect, rl.BLUE)
-	rl.DrawRectangleRec(paddles[1].rect, rl.BLUE)
+	rl.DrawRectangleRec(paddles[0].rect, rl.SKYBLUE)
+	rl.DrawRectangleRec(paddles[1].rect, rl.PURPLE)
 }
 
 @(private)
