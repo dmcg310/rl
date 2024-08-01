@@ -3,9 +3,7 @@
 A project which aims to provide a collection of Raylib games written in Odin. It currently includes the following games:
 - Pong: Classic paddle game where two players compete to score points by hitting a ball back and forth.
 
-## Features
-
-- Multiple games.
+Game previews are available in [images](images/images.md).
 
 ## Prerequisites
 
@@ -20,10 +18,11 @@ Ensure that both Odin and Raylib are properly installed and their paths are set 
 ## Project Structure
 
 ```sh
-├── src\       # Odin source files
-├── scripts\        # Build script
+├── src/            # Odin source files
+├── images/         # Game previews
+├── scripts/        # Build script
 │   └── build.py
-└── bin\            # Output directory for compiled binary
+└── bin/            # Output directory for compiled binary
 ```
 
 ## Building and Running
