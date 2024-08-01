@@ -64,7 +64,7 @@ init :: proc() {
 	score := [2]int{0, 0}
 	arena := create_arena()
 	paddles := create_paddles(arena)
-	ball := create_ball(arena)
+	ball := create_ball()
 
 	state = PongState{score, arena, paddles, ball, .StartScreen, 3}
 }
@@ -183,6 +183,8 @@ draw :: proc() {
 
 @(private)
 draw_start_screen :: proc() {
+	draw_game()
+
 	title_text: cstring = "PONG"
 	font_size: i32 = 90
 	text_width := rl.MeasureText(title_text, font_size)
@@ -190,7 +192,7 @@ draw_start_screen :: proc() {
 	rl.DrawText(
 		title_text,
 		i32(rl.GetScreenWidth() / 2 - text_width / 2),
-		100,
+		125,
 		font_size,
 		rl.WHITE,
 	)
@@ -207,7 +209,7 @@ draw_start_screen :: proc() {
 		i32(rl.GetScreenWidth() / 2 - instruction_width / 2),
 		300,
 		instruction_font_size,
-		rl.GRAY,
+		rl.RAYWHITE,
 	)
 }
 
@@ -243,10 +245,10 @@ draw_countdown :: proc() {
 @(private)
 draw_game :: proc() {
 	draw_arena()
-	draw_divider(state.arena)
-	draw_paddles(state.paddles)
-	draw_ball(state.ball)
-	draw_score(state.score)
+	draw_divider()
+	draw_paddles()
+	draw_ball()
+	draw_score()
 }
 
 @(private)
@@ -335,21 +337,23 @@ draw_arena :: proc() {
 }
 
 @(private)
-draw_divider :: proc(arena: Arena) {
+draw_divider :: proc() {
 	div_width: f32 = 4
 	div_height: f32 = 20
 	div_spacing: f32 = 10
 
-	num_divs := (arena.rect.height + div_spacing) / (div_height + div_spacing)
+	num_divs :=
+		(state.arena.rect.height + div_spacing) / (div_height + div_spacing)
 
 	for i in 0 ..< num_divs {
-		y := arena.rect.y + (div_height + div_spacing) * i
+		y := state.arena.rect.y + (div_height + div_spacing) * i
 
-		if y + div_height > arena.rect.y + arena.rect.height {
-			div_height = (arena.rect.y + arena.rect.height) - y
+		if y + div_height > state.arena.rect.y + state.arena.rect.height {
+			div_height = (state.arena.rect.y + state.arena.rect.height) - y
 		}
 
-		x := arena.rect.x + (arena.rect.width / 2) - (div_width / 2)
+		x :=
+			state.arena.rect.x + (state.arena.rect.width / 2) - (div_width / 2)
 
 		rl.DrawRectangle(
 			i32(x),
@@ -362,20 +366,24 @@ draw_divider :: proc(arena: Arena) {
 }
 
 @(private)
-draw_paddles :: proc(paddles: [2]Paddle) {
-	rl.DrawRectangleRec(paddles[0].rect, rl.SKYBLUE)
-	rl.DrawRectangleRec(paddles[1].rect, rl.PURPLE)
+draw_paddles :: proc() {
+	rl.DrawRectangleRec(state.paddles[0].rect, rl.SKYBLUE)
+	rl.DrawRectangleRec(state.paddles[1].rect, rl.PURPLE)
 }
 
 @(private)
-draw_ball :: proc(ball: Ball) {
-	rl.DrawCircleV(ball.circle.center, ball.circle.radius, rl.RAYWHITE)
+draw_ball :: proc() {
+	rl.DrawCircleV(
+		state.ball.circle.center,
+		state.ball.circle.radius,
+		rl.RAYWHITE,
+	)
 }
 
 @(private)
-draw_score :: proc(score: [2]int) {
+draw_score :: proc() {
 	font_size: i32 = 70
-	score_text := rl.TextFormat("%d : %d", score[0], score[1])
+	score_text := rl.TextFormat("%d : %d", state.score[0], state.score[1])
 	text_width := rl.MeasureText(score_text, font_size)
 
 	x :=
@@ -505,13 +513,13 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 }
 
 @(private)
-create_ball :: proc(arena: Arena) -> Ball {
+create_ball :: proc() -> Ball {
 	circle_radius: f32 = 10
 
 	circle := Circle {
 		center = Vec2 {
-			arena.rect.x + arena.rect.width * 0.5,
-			arena.rect.y + arena.rect.height * 0.5,
+			state.arena.rect.x + state.arena.rect.width * 0.5,
+			state.arena.rect.y + state.arena.rect.height * 0.5,
 		},
 		radius = circle_radius,
 	}
@@ -527,6 +535,7 @@ create_ball :: proc(arena: Arena) -> Ball {
 
 @(private)
 reset_game :: proc() {
+	LAST_UPDATE_TIME = rl.GetTime()
 	reset_ball()
 	reset_paddles()
 }
@@ -542,7 +551,7 @@ reset_game_state :: proc() {
 
 @(private)
 reset_ball :: proc() {
-	state.ball = create_ball(state.arena)
+	state.ball = create_ball()
 }
 
 @(private)
