@@ -72,6 +72,8 @@ update_ball :: proc() {
 
 	if determine_paddle_collision() do state.ball.velocity.x *= -1
 	if determine_arena_collision() do state.ball.velocity.y *= -1
+
+	determine_scoring()
 }
 
 @(private)
@@ -118,6 +120,23 @@ determine_arena_collision :: proc() -> bool {
 	arena_bottom := state.arena.rect.y + state.arena.rect.height
 
 	return ball_top <= arena_top || ball_bottom >= arena_bottom
+}
+
+@(private)
+determine_scoring :: proc() {
+	ball_left := state.ball.circle.center.x - state.ball.circle.radius
+	ball_right := state.ball.circle.center.x + state.ball.circle.radius
+
+	arena_left := state.arena.rect.x
+	arena_right := state.arena.rect.x + state.arena.rect.width
+
+	if ball_left <= arena_left {
+		state.score[1] += 1
+		reset_ball(state.arena)
+	} else if ball_right >= arena_right {
+		state.score[0] += 1
+		reset_ball(state.arena)
+	}
 }
 
 @(private)
@@ -192,4 +211,9 @@ create_ball :: proc(arena: Arena) -> Ball {
 	}
 
 	return Ball{circle = circle, velocity = Vec2{1, 0.2}, speed = 1}
+}
+
+@(private)
+reset_ball :: proc(arena: Arena) {
+	state.ball = create_ball(arena)
 }
