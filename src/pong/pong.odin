@@ -520,7 +520,7 @@ create_ball :: proc() -> Ball {
 	return Ball {
 		circle = circle,
 		velocity = generate_random_velocity(),
-		speed = 2,
+		speed = 3,
 	}
 }
 
