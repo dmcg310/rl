@@ -45,6 +45,7 @@ init :: proc() {
 update :: proc() {
 	update_paddles()
 	update_ball()
+	update_score()
 }
 
 draw :: proc() {
@@ -70,72 +71,62 @@ update_ball :: proc() {
 	state.ball.circle.center.x += state.ball.velocity.x * state.ball.speed
 	state.ball.circle.center.y += state.ball.velocity.y * state.ball.speed
 
-	if determine_paddle_collision() do state.ball.velocity.x *= -1
-	if determine_arena_collision() do state.ball.velocity.y *= -1
-
-	determine_scoring()
+	determine_paddle_collision()
+	determine_arena_collision()
 }
 
 @(private)
-determine_paddle_collision :: proc() -> bool {
-	ball_speed := state.ball.speed
-	ball_velocity := state.ball.velocity
-	ball_radius := state.ball.circle.radius
-	ball_x := &state.ball.circle.center.x
-	ball_y := &state.ball.circle.center.y
-
-	ball_x^ += ball_velocity.x * ball_speed
-	ball_y^ += ball_velocity.y * ball_speed
-
-	ball_right_edge := ball_x^ + ball_radius
-	ball_left_edge := ball_x^ - ball_radius
-
-	ball_top_edge := ball_y^ + ball_radius
-	ball_bottom_edge := ball_y^ - ball_radius
-
-	for &paddle, i in state.paddles {
-		paddle_left_edge := paddle.rect.x
-		paddle_right_edge := paddle.rect.x + paddle.rect.width
-		paddle_top_edge := paddle.rect.y
-		paddle_bottom_edge := paddle.rect.y + paddle.rect.height
-
-		if ball_right_edge > paddle_left_edge &&
-		   ball_left_edge < paddle_right_edge {
-			if paddle_top_edge <= ball_bottom_edge &&
-			   paddle_bottom_edge >= ball_top_edge {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-@(private)
-determine_arena_collision :: proc() -> bool {
-	ball_top := state.ball.circle.center.y - state.ball.circle.radius
-	ball_bottom := state.ball.circle.center.y + state.ball.circle.radius
-
-	arena_top := state.arena.rect.y
-	arena_bottom := state.arena.rect.y + state.arena.rect.height
-
-	return ball_top <= arena_top || ball_bottom >= arena_bottom
-}
-
-@(private)
-determine_scoring :: proc() {
+update_score :: proc() {
 	ball_left := state.ball.circle.center.x - state.ball.circle.radius
 	ball_right := state.ball.circle.center.x + state.ball.circle.radius
 
 	arena_left := state.arena.rect.x
 	arena_right := state.arena.rect.x + state.arena.rect.width
 
-	if ball_left <= arena_left {
-		state.score[1] += 1
-		reset_ball(state.arena)
-	} else if ball_right >= arena_right {
-		state.score[0] += 1
-		reset_ball(state.arena)
+	if ball_left <= arena_left do state.score[1] += 1
+	else if ball_right >= arena_right do state.score[0] += 1
+	else do return
+
+	reset_ball(state.arena)
+}
+
+@(private)
+determine_arena_collision :: proc() {
+	ball_center := state.ball.circle.center
+	ball_radius := state.ball.circle.radius
+
+	wall_thickness: f32 = 1
+
+	top_wall := rl.Rectangle {
+		x      = state.arena.rect.x,
+		y      = state.arena.rect.y - wall_thickness,
+		width  = state.arena.rect.width,
+		height = wall_thickness,
+	}
+
+	bottom_wall := rl.Rectangle {
+		x      = state.arena.rect.x,
+		y      = state.arena.rect.y + state.arena.rect.height,
+		width  = state.arena.rect.width,
+		height = wall_thickness,
+	}
+
+	if rl.CheckCollisionCircleRec(ball_center, ball_radius, top_wall) ||
+	   rl.CheckCollisionCircleRec(ball_center, ball_radius, bottom_wall) {
+		state.ball.velocity.y *= -1
+	}
+}
+
+@(private)
+determine_paddle_collision :: proc() {
+	for paddle in state.paddles {
+		if rl.CheckCollisionCircleRec(
+			state.ball.circle.center,
+			state.ball.circle.radius,
+			paddle.rect,
+		) {
+			state.ball.velocity.x *= -1
+		}
 	}
 }
 
@@ -210,7 +201,7 @@ create_ball :: proc(arena: Arena) -> Ball {
 		radius = circle_radius,
 	}
 
-	return Ball{circle = circle, velocity = Vec2{1, 0.2}, speed = 1}
+	return Ball{circle = circle, velocity = Vec2{1, 0.2}, speed = 4}
 }
 
 @(private)
