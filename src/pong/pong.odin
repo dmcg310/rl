@@ -1,9 +1,7 @@
 package pong
 
-import "core:fmt"
 import "core:math"
 import "core:math/rand"
-import "core:strings"
 import rl "vendor:raylib"
 
 @(private)
@@ -107,7 +105,6 @@ update_countdown :: proc() {
 	}
 }
 
-
 @(private)
 update_game :: proc() {
 	update_paddles()
@@ -160,8 +157,7 @@ update_score :: proc() {
 
 	if state.score[0] == 3 || state.score[1] == 3 do state.game_state = .GameOver
 
-	reset_ball()
-	reset_paddles()
+	reset_game()
 }
 
 /* DRAW PROCEDURES */
@@ -232,7 +228,6 @@ draw_countdown :: proc() {
 	countdown_text := rl.TextFormat("%d", state.countdown)
 	font_size: i32 = 100
 	text_width := rl.MeasureText(countdown_text, font_size)
-
 	rl.DrawText(
 		countdown_text,
 		i32(rl.GetScreenWidth() / 2 - text_width / 2),
@@ -258,7 +253,6 @@ draw_game_over :: proc() {
 	game_over_text: cstring = "GAME OVER"
 	font_size: i32 = 90
 	text_width := rl.MeasureText(game_over_text, font_size)
-
 	rl.DrawText(
 		game_over_text,
 		i32(rl.GetScreenWidth() / 2 - text_width / 2),
@@ -273,7 +267,6 @@ draw_game_over :: proc() {
 	)
 	winner_font_size: i32 = 40
 	winner_text_width := rl.MeasureText(winner_text, winner_font_size)
-
 	rl.DrawText(
 		winner_text,
 		i32(rl.GetScreenWidth() / 2 - winner_text_width / 2),
@@ -285,7 +278,6 @@ draw_game_over :: proc() {
 	restart_text: cstring = "Press SPACE to restart"
 	restart_font_size: i32 = 30
 	restart_text_width := rl.MeasureText(restart_text, restart_font_size)
-
 	rl.DrawText(
 		restart_text,
 		i32(rl.GetScreenWidth() / 2 - restart_text_width / 2),
@@ -476,6 +468,7 @@ create_arena :: proc() -> Arena {
 
 	rect_width := screen_width * 0.75
 	rect_height := screen_height * 0.75
+
 	rect_x := (screen_width - rect_width) * 0.5
 	rect_y := (screen_height - rect_height) * 0.5
 
