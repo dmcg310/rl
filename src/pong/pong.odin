@@ -181,7 +181,7 @@ draw_start_screen :: proc() {
 	rl.ClearBackground(rl.BLACK)
 
 	title_text: cstring = "PONG"
-	font_size: i32 = 60
+	font_size: i32 = 90
 	text_width := rl.MeasureText(title_text, font_size)
 
 	rl.DrawText(
@@ -213,7 +213,7 @@ draw_countdown :: proc() {
 	draw_game()
 
 	countdown_text := rl.TextFormat("%d", state.countdown)
-	font_size: i32 = 100
+	font_size: i32 = 130
 	text_width := rl.MeasureText(countdown_text, font_size)
 
 	rl.DrawText(
@@ -228,6 +228,7 @@ draw_countdown :: proc() {
 @(private)
 draw_game :: proc() {
 	draw_arena()
+	draw_divider(state.arena)
 	draw_paddles(state.paddles)
 	draw_ball(state.ball)
 	draw_score(state.score)
@@ -238,7 +239,7 @@ draw_game_over :: proc() {
 	draw_game()
 
 	game_over_text: cstring = "GAME OVER"
-	font_size: i32 = 60
+	font_size: i32 = 90
 	text_width := rl.MeasureText(game_over_text, font_size)
 
 	rl.DrawText(
@@ -283,6 +284,33 @@ draw_arena :: proc() {
 }
 
 @(private)
+draw_divider :: proc(arena: Arena) {
+	div_width: f32 = 4
+	div_height: f32 = 20
+	div_spacing: f32 = 10
+
+	num_divs := (arena.rect.height + div_spacing) / (div_height + div_spacing)
+
+	for i in 0 ..< num_divs {
+		y := arena.rect.y + (div_height + div_spacing) * i
+
+		if y + div_height > arena.rect.y + arena.rect.height {
+			div_height = (arena.rect.y + arena.rect.height) - y
+		}
+
+		x := arena.rect.x + (arena.rect.width / 2) - (div_width / 2)
+
+		rl.DrawRectangle(
+			i32(x),
+			i32(y),
+			i32(div_width),
+			i32(div_height),
+			rl.RAYWHITE,
+		)
+	}
+}
+
+@(private)
 draw_paddles :: proc(paddles: [2]Paddle) {
 	rl.DrawRectangleRec(paddles[0].rect, rl.BLUE)
 	rl.DrawRectangleRec(paddles[1].rect, rl.BLUE)
@@ -295,7 +323,7 @@ draw_ball :: proc(ball: Ball) {
 
 @(private)
 draw_score :: proc(score: [2]int) {
-	font_size: i32 = 40
+	font_size: i32 = 70
 	score_text := rl.TextFormat("%d : %d", score[0], score[1])
 	text_width := rl.MeasureText(score_text, font_size)
 
@@ -387,8 +415,8 @@ create_arena :: proc() -> Arena {
 	screen_width := f32(rl.GetScreenWidth())
 	screen_height := f32(rl.GetScreenHeight())
 
-	rect_width := screen_width * 0.5
-	rect_height := screen_height * 0.5
+	rect_width := screen_width * 0.75
+	rect_height := screen_height * 0.75
 	rect_x := (screen_width - rect_width) * 0.5
 	rect_y := (screen_height - rect_height) * 0.5
 
@@ -397,10 +425,10 @@ create_arena :: proc() -> Arena {
 
 @(private)
 create_paddles :: proc(arena: Arena) -> [2]Paddle {
-	paddle_width: f32 = 10
-	paddle_height: f32 = 100
+	paddle_width: f32 = 25
+	paddle_height: f32 = 120
 	paddle_offset: f32 = 20
-	paddle_speed: f32 = 2
+	paddle_speed: f32 = 3
 
 	paddle_left := Paddle {
 		rect = {
@@ -427,7 +455,7 @@ create_paddles :: proc(arena: Arena) -> [2]Paddle {
 
 @(private)
 create_ball :: proc(arena: Arena) -> Ball {
-	circle_radius: f32 = 7
+	circle_radius: f32 = 10
 
 	circle := Circle {
 		center = Vec2 {
