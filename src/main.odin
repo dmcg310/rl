@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:os"
 import rl "vendor:raylib"
 
+import "breakout"
 import "pong"
 
 Game :: struct {
@@ -15,6 +16,12 @@ Game :: struct {
 
 games := []Game {
 	{name = "pong", init = pong.init, update = pong.update, draw = pong.draw},
+	{
+		name = "breakout",
+		init = breakout.init,
+		update = breakout.update,
+		draw = breakout.draw,
+	},
 }
 
 selected_game: ^Game
@@ -52,7 +59,7 @@ parse_arguments :: proc() -> bool {
 }
 
 display_usage :: proc() {
-	fmt.println("Usage: ./exe <game_name>")
+	fmt.println("Usage: ./rl <game_name>")
 	display_available_games()
 }
 
