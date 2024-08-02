@@ -1,5 +1,6 @@
 package breakout
 
+import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import rl "vendor:raylib"
@@ -19,7 +20,6 @@ GameState :: enum {
 Arena :: struct {
 	rect: rl.Rectangle,
 }
-
 
 @(private)
 Paddle :: struct {
@@ -42,10 +42,18 @@ Circle :: struct {
 }
 
 @(private)
+Brick :: struct {
+	rect:   rl.Rectangle,
+	color:  rl.Color,
+	active: bool,
+}
+
+@(private)
 BreakoutState :: struct {
 	arena:      Arena,
 	paddle:     Paddle,
 	ball:       Ball,
+	bricks:     []Brick,
 	game_state: GameState,
 }
 
@@ -53,14 +61,18 @@ BreakoutState :: struct {
 state: BreakoutState
 
 @(private)
-BORDER_THICKNESS: f32 = 10
+ARENA_BORDER_THICKNESS: f32 = 10
+
+@(private)
+BRICK_BORDER_THICKNESS: f32 = 1
 
 init :: proc() {
 	arena := create_arena()
 	paddle := create_paddle(arena)
 	ball := create_ball(arena)
+	bricks := create_bricks(arena)
 
-	state = BreakoutState{arena, paddle, ball, .Playing}
+	state = BreakoutState{arena, paddle, ball, bricks, .Playing}
 }
 
 /* UPDATE PROCEDURES */
@@ -82,6 +94,7 @@ update :: proc() {
 update_game :: proc() {
 	update_paddle()
 	update_ball()
+	update_bricks()
 }
 
 @(private)
@@ -110,6 +123,10 @@ update_ball :: proc() {
 	determine_paddle_collision()
 }
 
+@(private)
+update_bricks :: proc() {
+}
+
 /* DRAW PROCEDURS */
 
 draw :: proc() {
@@ -132,6 +149,7 @@ draw_game :: proc() {
 	draw_arena()
 	draw_paddle()
 	draw_ball()
+	draw_bricks()
 }
 
 @(private)
@@ -140,27 +158,27 @@ draw_arena :: proc() {
 
 	// Draw top border
 	rl.DrawRectangle(
-		i32(state.arena.rect.x - BORDER_THICKNESS),
-		i32(state.arena.rect.y - BORDER_THICKNESS),
-		i32(state.arena.rect.width + 2 * BORDER_THICKNESS),
-		i32(BORDER_THICKNESS),
+		i32(state.arena.rect.x - ARENA_BORDER_THICKNESS),
+		i32(state.arena.rect.y - ARENA_BORDER_THICKNESS),
+		i32(state.arena.rect.width + 2 * ARENA_BORDER_THICKNESS),
+		i32(ARENA_BORDER_THICKNESS),
 		rl.RAYWHITE,
 	)
 
 	// Draw bottom border
 	rl.DrawRectangle(
-		i32(state.arena.rect.x - BORDER_THICKNESS),
+		i32(state.arena.rect.x - ARENA_BORDER_THICKNESS),
 		i32(state.arena.rect.y + state.arena.rect.height),
-		i32(state.arena.rect.width + 2 * BORDER_THICKNESS),
-		i32(BORDER_THICKNESS),
+		i32(state.arena.rect.width + 2 * ARENA_BORDER_THICKNESS),
+		i32(ARENA_BORDER_THICKNESS),
 		rl.RAYWHITE,
 	)
 
 	// Draw left border
 	rl.DrawRectangle(
-		i32(state.arena.rect.x - BORDER_THICKNESS),
+		i32(state.arena.rect.x - ARENA_BORDER_THICKNESS),
 		i32(state.arena.rect.y),
-		i32(BORDER_THICKNESS),
+		i32(ARENA_BORDER_THICKNESS),
 		i32(state.arena.rect.height),
 		rl.RAYWHITE,
 	)
@@ -169,7 +187,7 @@ draw_arena :: proc() {
 	rl.DrawRectangle(
 		i32(state.arena.rect.x + state.arena.rect.width),
 		i32(state.arena.rect.y),
-		i32(BORDER_THICKNESS),
+		i32(ARENA_BORDER_THICKNESS),
 		i32(state.arena.rect.height),
 		rl.RAYWHITE,
 	)
@@ -187,6 +205,20 @@ draw_ball :: proc() {
 		state.ball.circle.radius,
 		rl.RAYWHITE,
 	)
+}
+
+@(private)
+draw_bricks :: proc() {
+	for brick in state.bricks {
+		if brick.active {
+			rl.DrawRectangleRec(brick.rect, brick.color)
+			rl.DrawRectangleLinesEx(
+				brick.rect,
+				f32(BRICK_BORDER_THICKNESS),
+				rl.BLACK,
+			)
+		}
+	}
 }
 
 /* CALCULATION PROCEDURES */
@@ -311,6 +343,66 @@ create_ball :: proc(arena: Arena) -> Ball {
 		velocity = generate_random_velocity(),
 		speed = 5,
 	}
+}
+
+@(private)
+create_bricks :: proc(arena: Arena) -> []Brick {
+	bricks: [dynamic]Brick = {}
+
+	rows := 8
+	cols := 16
+	margin: f32 = 5
+
+	brick_width := (arena.rect.width - margin * 2) / f32(cols)
+	brick_height: f32 = 20
+
+	total_brick_height := f32(rows) * brick_height
+
+	start_y := arena.rect.y + 20
+
+	for row_idx := 0; row_idx < rows; row_idx += 1 {
+		for col_idx := 0; col_idx < cols; col_idx += 1 {
+			x := arena.rect.x + margin + f32(col_idx) * brick_width
+			y := start_y + f32(row_idx) * brick_height
+
+			brick_color: rl.Color
+
+			switch row_idx {
+			case 0:
+				brick_color = rl.RED
+			case 1:
+				brick_color = rl.ORANGE
+			case 2:
+				brick_color = rl.GOLD
+			case 3:
+				brick_color = rl.YELLOW
+			case 4:
+				brick_color = rl.GREEN
+			case 5:
+				brick_color = rl.SKYBLUE
+			case 6:
+				brick_color = rl.BLUE
+			case 7:
+				brick_color = rl.VIOLET
+			}
+
+			append(
+				&bricks,
+				Brick {
+					rect = {
+						x = x,
+						y = y,
+						width = brick_width,
+						height = brick_height,
+					},
+					color = brick_color,
+					active = true,
+				},
+			)
+		}
+	}
+
+	return bricks[:]
 }
 
 /* UTILITY PROCEDURES */
