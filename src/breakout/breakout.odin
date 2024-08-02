@@ -292,14 +292,17 @@ determine_paddle_collision :: proc() {
 @(private)
 determine_brick_collision :: proc() {
 	for &brick in state.bricks {
-		if brick.active && rl.CheckCollisionCircleRec(
-			state.ball.circle.center,
-			state.ball.circle.radius,
-			brick.rect,
-		) {
+		if brick.active &&
+		   rl.CheckCollisionCircleRec(
+			   state.ball.circle.center,
+			   state.ball.circle.radius,
+			   brick.rect,
+		   ) {
 			brick.active = false
+
 			state.ball.velocity *= -1
 			state.ball.speed += 0.2
+
 			break
 		}
 	}
