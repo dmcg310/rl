@@ -125,6 +125,7 @@ update_ball :: proc() {
 
 @(private)
 update_bricks :: proc() {
+	determine_brick_collision()
 }
 
 /* DRAW PROCEDURS */
@@ -288,6 +289,22 @@ determine_paddle_collision :: proc() {
 	}
 }
 
+@(private)
+determine_brick_collision :: proc() {
+	for &brick in state.bricks {
+		if brick.active && rl.CheckCollisionCircleRec(
+			state.ball.circle.center,
+			state.ball.circle.radius,
+			brick.rect,
+		) {
+			brick.active = false
+			state.ball.velocity *= -1
+			state.ball.speed += 0.2
+			break
+		}
+	}
+}
+
 /* Create PROCEDURES */
 
 @(private)
@@ -341,7 +358,7 @@ create_ball :: proc(arena: Arena) -> Ball {
 	return Ball {
 		circle = circle,
 		velocity = generate_random_velocity(),
-		speed = 4,
+		speed = 3,
 	}
 }
 
@@ -354,7 +371,7 @@ create_bricks :: proc(arena: Arena) -> []Brick {
 	margin: f32 = 5
 
 	brick_width := (arena.rect.width - margin * 2) / f32(cols)
-	brick_height: f32 = 20
+	brick_height: f32 = 25
 
 	total_brick_height := f32(rows) * brick_height
 
