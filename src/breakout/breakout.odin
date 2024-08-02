@@ -328,7 +328,7 @@ create_paddle :: proc(arena: Arena) -> Paddle {
 
 @(private)
 create_ball :: proc(arena: Arena) -> Ball {
-	circle_radius: f32 = 10
+	circle_radius: f32 = 7
 
 	circle := Circle {
 		center = Vec2 {
@@ -341,7 +341,7 @@ create_ball :: proc(arena: Arena) -> Ball {
 	return Ball {
 		circle = circle,
 		velocity = generate_random_velocity(),
-		speed = 5,
+		speed = 4,
 	}
 }
 
