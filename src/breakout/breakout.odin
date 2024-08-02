@@ -1,5 +1,8 @@
 package breakout
 
+import "core:math"
+import "core:fmt"
+import "core:math/rand"
 import rl "vendor:raylib"
 
 @(private)
@@ -27,9 +30,23 @@ Paddle :: struct {
 }
 
 @(private)
+Ball :: struct {
+	circle:   Circle,
+	velocity: Vec2,
+	speed:    f32,
+}
+
+@(private)
+Circle :: struct {
+	center: Vec2,
+	radius: f32,
+}
+
+@(private)
 BreakoutState :: struct {
 	arena:      Arena,
 	paddle:     Paddle,
+	ball:       Ball,
 	game_state: GameState,
 }
 
@@ -42,8 +59,9 @@ BORDER_THICKNESS: f32 = 10
 init :: proc() {
 	arena := create_arena()
 	paddle := create_paddle(arena)
+	ball := create_ball(arena)
 
-	state = BreakoutState{arena, paddle, .Playing}
+	state = BreakoutState{arena, paddle, ball, .Playing}
 }
 
 /* UPDATE PROCEDURES */
@@ -64,6 +82,7 @@ update :: proc() {
 @(private)
 update_game :: proc() {
 	update_paddle()
+	update_ball()
 }
 
 @(private)
@@ -80,6 +99,16 @@ update_paddle :: proc() {
 	paddle.rect.x += paddle.direction * paddle.speed
 
 	determine_paddle_arena_collision()
+}
+
+@(private)
+update_ball :: proc() {
+	ball := &state.ball
+    ball.circle.center.x += ball.velocity.x * ball.speed
+    ball.circle.center.y += ball.velocity.y * ball.speed
+
+    determine_arena_collision()
+    determine_paddle_collision()
 }
 
 /* DRAW PROCEDURS */
@@ -103,6 +132,7 @@ draw :: proc() {
 draw_game :: proc() {
 	draw_arena()
 	draw_paddle()
+	draw_ball()
 }
 
 @(private)
@@ -151,6 +181,15 @@ draw_paddle :: proc() {
 	rl.DrawRectangleRec(state.paddle.rect, rl.SKYBLUE)
 }
 
+@(private)
+draw_ball :: proc() {
+	rl.DrawCircleV(
+		state.ball.circle.center,
+		state.ball.circle.radius,
+		rl.RAYWHITE,
+	)
+}
+
 /* CALCULATION PROCEDURES */
 
 @(private)
@@ -166,6 +205,50 @@ determine_paddle_arena_collision :: proc() {
 	if state.paddle.rect.x > right_boundary {
 		state.paddle.rect.x = right_boundary
 	}
+}
+
+@(private)
+determine_arena_collision :: proc() {
+    ball := &state.ball
+    arena := state.arena
+
+    // Left and right walls
+    if ball.circle.center.x - ball.circle.radius <= arena.rect.x ||
+       ball.circle.center.x + ball.circle.radius >= arena.rect.x + arena.rect.width {
+        ball.velocity.x *= -1
+    }
+
+    // Top wall
+    if ball.circle.center.y - ball.circle.radius <= arena.rect.y {
+        ball.velocity.y *= -1
+    }
+
+	// TEMPORARY
+    if ball.circle.center.y + ball.circle.radius >= arena.rect.y + arena.rect.height {
+        ball.velocity.y *= -1
+    }
+}
+
+@(private)
+determine_paddle_collision :: proc() {
+    ball := &state.ball
+    paddle := &state.paddle
+
+    if rl.CheckCollisionCircleRec(
+        ball.circle.center,
+        ball.circle.radius,
+        paddle.rect,
+    ) {
+        ball.velocity.y *= -1
+
+        paddle_center := paddle.rect.x + paddle.rect.width / 2
+        hit_position := (ball.circle.center.x - paddle_center) / (paddle.rect.width / 2)
+        ball.velocity.x = hit_position
+
+        length := math.sqrt(ball.velocity.x * ball.velocity.x + ball.velocity.y * ball.velocity.y)
+        ball.velocity.x /= length
+        ball.velocity.y /= length
+    }
 }
 
 /* Create PROCEDURES */
@@ -204,4 +287,31 @@ create_paddle :: proc(arena: Arena) -> Paddle {
 		speed = paddle_speed,
 		direction = 0,
 	}
+}
+
+@(private)
+create_ball :: proc(arena: Arena) -> Ball {
+    circle_radius: f32 = 10
+
+    circle := Circle {
+        center = Vec2 {
+            arena.rect.x + arena.rect.width * 0.5,
+            arena.rect.y + arena.rect.height * 0.5,
+        },
+        radius = circle_radius,
+    }
+
+    return Ball {
+        circle = circle,
+        velocity = generate_random_velocity(),
+        speed = 5,
+    }
+}
+
+/* UTILITY PROCEDURES */
+
+@(private)
+generate_random_velocity :: proc() -> Vec2 {
+    angle := rand.float32_range(-60, 60) * math.PI / 180
+    return Vec2{math.sin(angle), math.cos(angle)}
 }
