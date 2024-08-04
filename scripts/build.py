@@ -15,8 +15,7 @@ def print_error(message):
 
 
 def build_odin_project(debug=True):
-    print_script(f"Building Odin project in {
-                 'debug' if debug else 'release'} mode...")
+    print_script(f"Building Odin project in {'debug' if debug else 'release'} mode...")
 
     os.makedirs("bin", exist_ok=True)
 
