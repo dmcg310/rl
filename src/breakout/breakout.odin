@@ -389,21 +389,21 @@ create_bricks :: proc(arena: Arena) -> []Brick {
 
 			switch row_idx {
 			case 0:
-				brick_color = rl.RED
+				fallthrough
 			case 1:
-				brick_color = rl.ORANGE
+				brick_color = rl.RED
 			case 2:
-				brick_color = rl.GOLD
+				fallthrough
 			case 3:
-				brick_color = rl.YELLOW
+				brick_color = rl.ORANGE
 			case 4:
-				brick_color = rl.GREEN
+				fallthrough
 			case 5:
-				brick_color = rl.SKYBLUE
+				brick_color = rl.YELLOW
 			case 6:
-				brick_color = rl.BLUE
+				fallthrough
 			case 7:
-				brick_color = rl.VIOLET
+				brick_color = rl.GREEN
 			}
 
 			append(
