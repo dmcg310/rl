@@ -50,6 +50,7 @@ Brick :: struct {
 
 @(private)
 BreakoutState :: struct {
+	score:      u16,
 	arena:      Arena,
 	paddle:     Paddle,
 	ball:       Ball,
@@ -67,12 +68,13 @@ ARENA_BORDER_THICKNESS: f32 = 10
 BRICK_BORDER_THICKNESS: f32 = 1
 
 init :: proc() {
+	score: u16 = 0
 	arena := create_arena()
 	paddle := create_paddle(arena)
 	ball := create_ball(arena)
 	bricks := create_bricks(arena)
 
-	state = BreakoutState{arena, paddle, ball, bricks, .Playing}
+	state = BreakoutState{score, arena, paddle, ball, bricks, .Playing}
 }
 
 /* UPDATE PROCEDURES */
@@ -125,7 +127,23 @@ update_ball :: proc() {
 
 @(private)
 update_bricks :: proc() {
-	determine_brick_collision()
+	update_score(determine_brick_collision())
+}
+
+@(private)
+update_score :: proc(brick: Brick) {
+	switch (brick.color) {
+	case rl.GREEN:
+		state.score += 1
+	case rl.YELLOW:
+		state.score += 3
+	case rl.ORANGE:
+		state.score += 5
+	case rl.RED:
+		state.score += 7
+	case:
+		return
+	}
 }
 
 /* DRAW PROCEDURS */
@@ -151,6 +169,7 @@ draw_game :: proc() {
 	draw_paddle()
 	draw_ball()
 	draw_bricks()
+	draw_score()
 }
 
 @(private)
@@ -222,6 +241,20 @@ draw_bricks :: proc() {
 	}
 }
 
+@(private)
+draw_score :: proc() {
+	font_size: i32 = 70
+	score_text := rl.TextFormat("%d", state.score)
+	text_width := rl.MeasureText(score_text, font_size)
+
+	x :=
+		i32(state.arena.rect.x + (state.arena.rect.width / 2)) -
+		(text_width / 2)
+	y := i32(state.arena.rect.y) - font_size - 10
+
+	rl.DrawText(score_text, x, y, font_size, rl.RAYWHITE)
+}
+
 /* CALCULATION PROCEDURES */
 
 @(private)
@@ -290,7 +323,7 @@ determine_paddle_collision :: proc() {
 }
 
 @(private)
-determine_brick_collision :: proc() {
+determine_brick_collision :: proc() -> Brick {
 	for &brick in state.bricks {
 		if brick.active &&
 		   rl.CheckCollisionCircleRec(
@@ -303,9 +336,11 @@ determine_brick_collision :: proc() {
 			state.ball.velocity *= -1
 			state.ball.speed += 0.2
 
-			break
+			return brick
 		}
 	}
+
+	return {}
 }
 
 /* Create PROCEDURES */
