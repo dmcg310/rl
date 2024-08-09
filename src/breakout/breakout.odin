@@ -476,17 +476,20 @@ determine_paddle_collision :: proc() {
 		ball.circle.radius,
 		paddle.rect,
 	) {
-		ball.velocity.y *= -1
-
 		paddle_center := paddle.rect.x + paddle.rect.width / 2
 		hit_position :=
 			(ball.circle.center.x - paddle_center) / (paddle.rect.width / 2)
-		ball.velocity.x = hit_position
+
+		angle := hit_position * 60 * math.PI / 180
+
+		ball.velocity.x = math.sin(angle)
+		ball.velocity.y = -math.abs(math.cos(angle))
 
 		length := math.sqrt(
 			ball.velocity.x * ball.velocity.x +
 			ball.velocity.y * ball.velocity.y,
 		)
+
 		ball.velocity.x /= length
 		ball.velocity.y /= length
 	}
@@ -531,7 +534,7 @@ create_arena :: proc() -> Arena {
 
 @(private)
 create_paddle :: proc(arena: Arena) -> Paddle {
-	paddle_width: f32 = 100
+	paddle_width: f32 = 130
 	paddle_height: f32 = 20
 	paddle_offset: f32 = 20
 	paddle_speed: f32 = 3
