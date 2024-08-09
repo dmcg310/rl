@@ -51,15 +51,20 @@ Brick :: struct {
 @(private)
 BreakoutState :: struct {
 	score:      u16,
+	lives:      u8,
 	arena:      Arena,
 	paddle:     Paddle,
 	ball:       Ball,
 	bricks:     []Brick,
 	game_state: GameState,
+	countdown:  u8,
 }
 
 @(private)
 state: BreakoutState
+
+@(private)
+LAST_UPDATE_TIME := rl.GetTime()
 
 @(private)
 ARENA_BORDER_THICKNESS: f32 = 10
@@ -67,14 +72,27 @@ ARENA_BORDER_THICKNESS: f32 = 10
 @(private)
 BRICK_BORDER_THICKNESS: f32 = 1
 
+@(private)
+DEFAULT_LIVES: u8 = 3
+
 init :: proc() {
 	score: u16 = 0
+	lives := DEFAULT_LIVES
 	arena := create_arena()
 	paddle := create_paddle(arena)
 	ball := create_ball(arena)
 	bricks := create_bricks(arena)
 
-	state = BreakoutState{score, arena, paddle, ball, bricks, .Playing}
+	state = BreakoutState {
+		score,
+		lives,
+		arena,
+		paddle,
+		ball,
+		bricks,
+		.StartScreen,
+		3,
+	}
 }
 
 /* UPDATE PROCEDURES */
@@ -82,13 +100,36 @@ init :: proc() {
 update :: proc() {
 	switch state.game_state {
 	case .StartScreen:
-	// update_start_screen()
+		update_start_screen()
 	case .Countdown:
-	// update_countdown()
+		update_countdown()
 	case .Playing:
 		update_game()
 	case .GameOver:
-	// update_game_over()
+		update_game_over()
+	}
+}
+
+@(private)
+update_start_screen :: proc() {
+	if rl.IsKeyPressed(.SPACE) {
+		state.game_state = .Countdown
+		reset_game()
+	}
+}
+
+@(private)
+update_countdown :: proc() {
+	current_time := rl.GetTime()
+
+	if state.countdown > 0 {
+		if current_time - LAST_UPDATE_TIME >= 1.0 {
+			state.countdown -= 1
+
+			LAST_UPDATE_TIME = current_time
+
+			if state.countdown == 0 do state.game_state = .Playing
+		}
 	}
 }
 
@@ -97,6 +138,14 @@ update_game :: proc() {
 	update_paddle()
 	update_ball()
 	update_bricks()
+}
+
+@(private)
+update_game_over :: proc() {
+	if rl.IsKeyPressed(.SPACE) {
+		reset_game_state()
+		state.game_state = .Countdown
+	}
 }
 
 @(private)
@@ -153,15 +202,77 @@ draw :: proc() {
 
 	switch state.game_state {
 	case .StartScreen:
-	// draw_start_screen()
+		draw_start_screen()
 	case .Countdown:
-	// draw_countdown()
+		draw_countdown()
 	case .Playing:
 		draw_game()
 	case .GameOver:
-	// draw_game_over()
+		draw_game_over()
 	}
 }
+
+@(private)
+draw_start_screen :: proc() {
+	draw_game()
+
+
+	title_text: cstring = "BREAKOUT"
+	font_size: i32 = 90
+	text_width := rl.MeasureText(title_text, font_size)
+
+	rl.DrawText(
+		title_text,
+		i32(rl.GetScreenWidth() / 2 - text_width / 2),
+		125,
+		font_size,
+		rl.WHITE,
+	)
+
+	instruction_text: cstring = "Press SPACE to start"
+	instruction_font_size: i32 = 30
+	instruction_width := rl.MeasureText(
+		instruction_text,
+		instruction_font_size,
+	)
+
+	rl.DrawText(
+		instruction_text,
+		i32(rl.GetScreenWidth() / 2 - instruction_width / 2),
+		300,
+		instruction_font_size,
+		rl.RAYWHITE,
+	)
+}
+
+@(private)
+draw_countdown :: proc() {
+	draw_game()
+
+	countdown_bg_width: i32 = 200
+	countdown_bg_height: i32 = 150
+	countdown_bg_x := i32(rl.GetScreenWidth() / 2 - countdown_bg_width / 2)
+	countdown_bg_y := i32(rl.GetScreenHeight() / 2 - countdown_bg_height / 2)
+	rl.DrawRectangle(
+		countdown_bg_x,
+		countdown_bg_y,
+		countdown_bg_width,
+		countdown_bg_height,
+		rl.ColorAlpha(rl.BLACK, 0.5),
+	)
+
+	countdown_text := rl.TextFormat("%d", state.countdown)
+	font_size: i32 = 100
+	text_width := rl.MeasureText(countdown_text, font_size)
+	rl.DrawText(
+		countdown_text,
+		i32(rl.GetScreenWidth() / 2 - text_width / 2),
+		i32(rl.GetScreenHeight() / 2 - font_size / 2),
+		font_size,
+		rl.WHITE,
+	)
+}
+
 
 @(private)
 draw_game :: proc() {
@@ -170,6 +281,45 @@ draw_game :: proc() {
 	draw_ball()
 	draw_bricks()
 	draw_score()
+	draw_lives()
+}
+
+@(private)
+draw_game_over :: proc() {
+	draw_game()
+
+	game_over_text: cstring = "GAME OVER"
+	font_size: i32 = 90
+	text_width := rl.MeasureText(game_over_text, font_size)
+	rl.DrawText(
+		game_over_text,
+		i32(rl.GetScreenWidth() / 2 - text_width / 2),
+		125,
+		font_size,
+		rl.WHITE,
+	)
+
+	score_text := rl.TextFormat("Score: %d", i32(state.score))
+	score_font_size: i32 = 40
+	score_text_width := rl.MeasureText(score_text, score_font_size)
+	rl.DrawText(
+		score_text,
+		i32(rl.GetScreenWidth() / 2 - score_text_width / 2),
+		250,
+		score_font_size,
+		rl.SKYBLUE,
+	)
+
+	restart_text: cstring = "Press SPACE to restart"
+	restart_font_size: i32 = 30
+	restart_text_width := rl.MeasureText(restart_text, restart_font_size)
+	rl.DrawText(
+		restart_text,
+		i32(rl.GetScreenWidth() / 2 - restart_text_width / 2),
+		300,
+		restart_font_size,
+		rl.GRAY,
+	)
 }
 
 @(private)
@@ -255,6 +405,20 @@ draw_score :: proc() {
 	rl.DrawText(score_text, x, y, font_size, rl.RAYWHITE)
 }
 
+@(private)
+draw_lives :: proc() {
+	font_size: i32 = 50
+	lives_text := rl.TextFormat("Lives: %d", state.lives)
+	text_width := rl.MeasureText(lives_text, font_size)
+
+	x :=
+		i32(state.arena.rect.x + (state.arena.rect.width / 2)) -
+		(text_width / 2)
+	y := i32(state.arena.rect.y + state.arena.rect.height) + 20
+
+	rl.DrawText(lives_text, x, y, font_size, rl.RED)
+}
+
 /* CALCULATION PROCEDURES */
 
 @(private)
@@ -289,10 +453,16 @@ determine_arena_collision :: proc() {
 		ball.velocity.y *= -1
 	}
 
-	// TEMPORARY
+	// Bottom wall
 	if ball.circle.center.y + ball.circle.radius >=
 	   arena.rect.y + arena.rect.height {
-		ball.velocity.y *= -1
+		if state.lives == 0 {
+			state.game_state = .GameOver
+			return
+		}
+
+		state.lives -= 1
+		reset_game()
 	}
 }
 
@@ -458,6 +628,37 @@ create_bricks :: proc(arena: Arena) -> []Brick {
 	}
 
 	return bricks[:]
+}
+
+/* RESET PROCEDURES */
+
+@(private)
+reset_game :: proc() {
+	LAST_UPDATE_TIME = rl.GetTime()
+	reset_ball()
+	reset_paddle()
+	state.countdown = 3
+	state.game_state = .Countdown
+}
+
+@(private)
+reset_game_state :: proc() {
+	state.score = 0
+	state.countdown = 3
+	state.lives = 3
+	LAST_UPDATE_TIME = rl.GetTime()
+	reset_ball()
+	reset_paddle()
+}
+
+@(private)
+reset_ball :: proc() {
+	state.ball = create_ball(state.arena)
+}
+
+@(private)
+reset_paddle :: proc() {
+	state.paddle = create_paddle(state.arena)
 }
 
 /* UTILITY PROCEDURES */
