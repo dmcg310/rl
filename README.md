@@ -2,6 +2,7 @@
 
 A project which aims to provide a collection of Raylib games written in Odin. It currently includes the following games:
 - Pong: Classic paddle game where two players compete to score points by hitting a ball back and forth.
+- Breakout: Classic arcade game where the player controls a paddle at the bottom of the screen to bounce a ball upwards, breaking rows of bricks at the top.
 
 Game previews are available in [images](images/images.md).
 
