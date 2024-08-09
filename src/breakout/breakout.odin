@@ -1,6 +1,5 @@
 package breakout
 
-import "core:fmt"
 import "core:math"
 import "core:math/rand"
 import rl "vendor:raylib"
@@ -14,6 +13,7 @@ GameState :: enum {
 	Countdown,
 	Playing,
 	GameOver,
+	LevelComplete,
 }
 
 @(private)
@@ -50,14 +50,15 @@ Brick :: struct {
 
 @(private)
 BreakoutState :: struct {
-	score:      u16,
-	lives:      u8,
-	arena:      Arena,
-	paddle:     Paddle,
-	ball:       Ball,
-	bricks:     []Brick,
-	game_state: GameState,
-	countdown:  u8,
+	score:        u16,
+	lives:        u8,
+	arena:        Arena,
+	paddle:       Paddle,
+	ball:         Ball,
+	bricks:       []Brick,
+	bricks_alive: u16,
+	game_state:   GameState,
+	countdown:    u8,
 }
 
 @(private)
@@ -82,6 +83,9 @@ init :: proc() {
 	paddle := create_paddle(arena)
 	ball := create_ball(arena)
 	bricks := create_bricks(arena)
+	bricks_alive: u16 = 128
+	starting_state: GameState = .StartScreen
+	countdown: u8 = 3
 
 	state = BreakoutState {
 		score,
@@ -90,8 +94,9 @@ init :: proc() {
 		paddle,
 		ball,
 		bricks,
-		.StartScreen,
-		3,
+		bricks_alive,
+		starting_state,
+		countdown,
 	}
 }
 
@@ -107,6 +112,8 @@ update :: proc() {
 		update_game()
 	case .GameOver:
 		update_game_over()
+	case .LevelComplete:
+		update_level_complete()
 	}
 }
 
@@ -138,13 +145,30 @@ update_game :: proc() {
 	update_paddle()
 	update_ball()
 	update_bricks()
+
+	if state.bricks_alive == 0 {
+		state.game_state = .LevelComplete
+	}
 }
 
 @(private)
 update_game_over :: proc() {
 	if rl.IsKeyPressed(.SPACE) {
+		reset_game_completely()
+		state.game_state = .Countdown
+	}
+}
+
+@(private)
+update_level_complete :: proc() {
+	if rl.IsKeyPressed(.SPACE) {
+		if state.lives < 5 {
+			state.lives += 1
+		}
+
 		reset_game_state()
 		state.game_state = .Countdown
+		state.ball.speed += 0.5
 	}
 }
 
@@ -209,6 +233,8 @@ draw :: proc() {
 		draw_game()
 	case .GameOver:
 		draw_game_over()
+	case .LevelComplete:
+		draw_level_complete()
 	}
 }
 
@@ -299,7 +325,7 @@ draw_game_over :: proc() {
 		rl.WHITE,
 	)
 
-	score_text := rl.TextFormat("Score: %d", i32(state.score))
+	score_text := rl.TextFormat("Final Score: %d", i32(state.score))
 	score_font_size: i32 = 40
 	score_text_width := rl.MeasureText(score_text, score_font_size)
 	rl.DrawText(
@@ -319,6 +345,44 @@ draw_game_over :: proc() {
 		300,
 		restart_font_size,
 		rl.GRAY,
+	)
+}
+
+@(private)
+draw_level_complete :: proc() {
+	draw_game()
+
+	level_complete_text: cstring = "LEVEL COMPLETE!"
+	font_size: i32 = 60
+	text_width := rl.MeasureText(level_complete_text, font_size)
+	rl.DrawText(
+		level_complete_text,
+		i32(rl.GetScreenWidth() / 2 - text_width / 2),
+		125,
+		font_size,
+		rl.GREEN,
+	)
+
+	score_text := rl.TextFormat("Current Score: %d", i32(state.score))
+	score_font_size: i32 = 40
+	score_text_width := rl.MeasureText(score_text, score_font_size)
+	rl.DrawText(
+		score_text,
+		i32(rl.GetScreenWidth() / 2 - score_text_width / 2),
+		250,
+		score_font_size,
+		rl.SKYBLUE,
+	)
+
+	restart_text: cstring = "Press SPACE for next level"
+	restart_font_size: i32 = 30
+	restart_text_width := rl.MeasureText(restart_text, restart_font_size)
+	rl.DrawText(
+		restart_text,
+		i32(rl.GetScreenWidth() / 2 - restart_text_width / 2),
+		300,
+		restart_font_size,
+		rl.WHITE,
 	)
 }
 
@@ -505,6 +569,7 @@ determine_brick_collision :: proc() -> Brick {
 			   brick.rect,
 		   ) {
 			brick.active = false
+			state.bricks_alive -= 1
 
 			state.ball.velocity *= -1
 			state.ball.speed += 0.2
@@ -645,13 +710,19 @@ reset_game :: proc() {
 }
 
 @(private)
-reset_game_state :: proc() {
+reset_game_completely :: proc() {
 	state.score = 0
-	state.countdown = 3
-	state.lives = 3
+	state.lives = DEFAULT_LIVES
+	reset_game_state()
+}
+
+@(private)
+reset_game_state :: proc() {
 	LAST_UPDATE_TIME = rl.GetTime()
+	state.countdown = 3
 	reset_ball()
 	reset_paddle()
+	reset_bricks()
 }
 
 @(private)
@@ -662,6 +733,12 @@ reset_ball :: proc() {
 @(private)
 reset_paddle :: proc() {
 	state.paddle = create_paddle(state.arena)
+}
+
+@(private)
+reset_bricks :: proc() {
+	state.bricks = create_bricks(state.arena)
+	state.bricks_alive = u16(len(state.bricks))
 }
 
 /* UTILITY PROCEDURES */
