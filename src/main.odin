@@ -5,6 +5,7 @@ import "core:os"
 import rl "vendor:raylib"
 
 import "breakout"
+import "doom"
 import "pong"
 
 Game :: struct {
@@ -22,6 +23,7 @@ games := []Game {
 		update = breakout.update,
 		draw = breakout.draw,
 	},
+	{name = "doom", init = doom.init, update = doom.update, draw = doom.draw},
 }
 
 selected_game: ^Game
