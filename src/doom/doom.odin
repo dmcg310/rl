@@ -14,7 +14,7 @@ state: State
 init :: proc() {
 	state = State {
 		camera = create_camera(),
-		level  = create_level("Basic", .Basic),
+		level  = create_level(),
 	}
 }
 
