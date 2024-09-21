@@ -2,6 +2,32 @@ package main
 
 import rl "vendor:raylib"
 
+import "breakout"
+import "pong"
+
+@(private = "file")
+Game :: struct {
+	name:        cstring,
+	description: cstring,
+	init:        proc(),
+	update:      proc(),
+	draw:        proc(),
+}
+
+@(private = "file")
+games := []Game {
+	{name = "Pong", init = pong.init, update = pong.update, draw = pong.draw},
+	{
+		name = "Breakout",
+		init = breakout.init,
+		update = breakout.update,
+		draw = breakout.draw,
+	},
+}
+
+@(private = "file")
+selected_game: int = 0
+
 @(private = "file")
 INITIAL_WIDTH, INITIAL_HEIGHT :: 1600, 900
 
@@ -39,10 +65,16 @@ init_window :: proc() {
 	rl.InitWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "rl")
 	rl.SetTargetFPS(160)
 	rl.SetWindowState({.WINDOW_RESIZABLE})
+
 }
 
 run_launcher :: proc() {
+	rl.GuiLoadStyle("assets/style_bluish.rgs")
+	rl.GuiSetStyle(.DEFAULT, i32(rl.GuiDefaultProperty.TEXT_SIZE), 40)
+
 	defer rl.CloseWindow()
+	defer free_all(context.temp_allocator)
+
 	for !rl.WindowShouldClose() {
 		update_launcher()
 		draw_launcher()
@@ -74,6 +106,7 @@ draw_launcher :: proc() {
 
 	draw_monitor()
 	draw_desk()
+	draw_game_buttons()
 }
 
 @(private = "file")
@@ -166,6 +199,44 @@ draw_desk :: proc() {
 		edge_thickness,
 		rl.BROWN,
 	)
+}
+
+@(private = "file")
+draw_game_buttons :: proc() {
+	padding: f32 = 40
+	gap: f32 = 10
+
+	available_width := desktop.rect.width - (2 * padding)
+	available_height := desktop.rect.height - (2 * padding)
+
+	num_rows := (len(games) + 1) / 2
+
+	button_width := (available_width - gap) / 2
+	button_height :=
+		(available_height - (f32(num_rows - 1) * gap)) / f32(num_rows)
+
+	for game, i in games {
+		column := i % 2
+		row := i / 2
+
+		x := desktop.rect.x + padding + f32(column) * (button_width + gap)
+		y := desktop.rect.y + padding + f32(row) * (button_height + gap)
+
+		button_rect := rl.Rectangle {
+			x      = x,
+			y      = y,
+			width  = button_width,
+			height = button_height,
+		}
+
+		if rl.GuiButton(button_rect, game.name) {
+			selected_game = i
+		}
+	}
+
+	if selected_game >= 0 && selected_game < len(games) {
+		// do something with selected game
+	}
 }
 
 @(private = "file")
