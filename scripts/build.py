@@ -27,7 +27,21 @@ def build_odin_project(debug=True):
     build_cmd = ["odin", "build", "src", f"-out:{output_file}"]
 
     if debug:
-        build_cmd.extend(["-debug"])
+        build_cmd.extend(
+            [
+                "-debug",
+                "-vet",
+                "-vet-unused-variables",
+                "-vet-shadowing",
+                "-vet-using-stmt",
+                "-vet-using-param",
+                "-vet-style",
+                "-vet-semicolon",
+                "-vet-cast",
+                "-vet-tabs",
+                "-warnings-as-errors",
+            ]
+        )
     else:
         build_cmd.extend(["-o:speed", "-no-bounds-check", "-disable-assert"])
 
@@ -41,8 +55,7 @@ def build_odin_project(debug=True):
         sys.exit(1)
 
     print(f"{Fore.GREEN}{Style.BRIGHT}--- Odin Timings End ---{Style.RESET_ALL}")
-    print_script(
-        f"Odin build completed successfully. Binary saved as {output_file}")
+    print_script(f"Odin build completed successfully. Binary saved as {output_file}")
 
     return output_file
 
