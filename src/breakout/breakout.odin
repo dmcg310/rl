@@ -649,8 +649,6 @@ create_bricks :: proc(arena: Arena) -> []Brick {
 	brick_width := (arena.rect.width - margin * 2) / f32(cols)
 	brick_height: f32 = 25
 
-	total_brick_height := f32(rows) * brick_height
-
 	start_y := arena.rect.y + 20
 
 	for row_idx := 0; row_idx < rows; row_idx += 1 {
