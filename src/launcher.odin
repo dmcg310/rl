@@ -6,32 +6,6 @@ import "breakout"
 import "pong"
 
 @(private = "file")
-Game :: struct {
-	name:        cstring,
-	description: cstring,
-	init:        proc(),
-	update:      proc(),
-	draw:        proc(),
-}
-
-@(private = "file")
-games := []Game {
-	{name = "Pong", init = pong.init, update = pong.update, draw = pong.draw},
-	{
-		name = "Breakout",
-		init = breakout.init,
-		update = breakout.update,
-		draw = breakout.draw,
-	},
-}
-
-@(private = "file")
-selected_game: int = 0
-
-@(private = "file")
-INITIAL_WIDTH, INITIAL_HEIGHT :: 1600, 900
-
-@(private = "file")
 MonitorDimensions :: struct {
 	width:           f32,
 	height:          f32,
@@ -46,9 +20,36 @@ DesktopDimensions :: struct {
 }
 
 @(private = "file")
+Game :: struct {
+	name:        cstring,
+	description: cstring,
+	init:        proc(),
+	update:      proc(),
+	draw:        proc(),
+}
+
+@(private = "file")
+INITIAL_WIDTH, INITIAL_HEIGHT :: 1600, 900
+
+@(private = "file")
+games := []Game {
+	{name = "Pong", init = pong.init, update = pong.update, draw = pong.draw},
+	{
+		name = "Breakout",
+		init = breakout.init,
+		update = breakout.update,
+		draw = breakout.draw,
+	},
+}
+
+@(private = "file")
+selected_game: int
+
+@(private = "file")
 monitor: MonitorDimensions
 @(private = "file")
 desktop: DesktopDimensions
+
 @(private = "file")
 window_width, window_height: i32
 
@@ -65,7 +66,6 @@ init_window :: proc() {
 	rl.InitWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "rl")
 	rl.SetTargetFPS(160)
 	rl.SetWindowState({.WINDOW_RESIZABLE})
-
 }
 
 run_launcher :: proc() {

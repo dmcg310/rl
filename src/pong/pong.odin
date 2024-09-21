@@ -4,7 +4,6 @@ import "core:math"
 import "core:math/rand"
 import rl "vendor:raylib"
 
-
 @(private)
 Vec2 :: [2]f32
 
